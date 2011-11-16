@@ -9,7 +9,7 @@ namespace Com\CetManagement\Crm\Admin\App\Models;
 /**
  * ClassBlock
  */
-class CalendarEvent extends \Model{
+class CalendarAlarm extends \Model{
 
 
 	/**
@@ -18,8 +18,6 @@ class CalendarEvent extends \Model{
 	 * @author
 	 */
 	public function init(){
-    $s = $this->schema();
-
 
 	}
 }

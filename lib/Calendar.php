@@ -36,7 +36,7 @@ class Calendar
 
 		foreach($this->content as $event){
 			$ics .= "BEGIN:VEVENT" . $this->ret;
-
+			$ics .= "" . $this->ret;
 			$ics .= "END:VEVENT" . $this->ret;
 		}
 
