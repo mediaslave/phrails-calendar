@@ -2,7 +2,10 @@
 /**
  * Namespace for models
  */
-namespace Com\CetManagement\Crm\Admin\App\Models;
+namespace net\mediaslave\calendar\app\models;
+
+use net\mediaslave\calendar\lib\Settings;
+use net\mediaslave\calendar\lib\exceptions\InitThruNotCalledException;
 /**
  * PageBlock
  */
@@ -11,15 +14,73 @@ namespace Com\CetManagement\Crm\Admin\App\Models;
  */
 class CalendarEvent extends \Model{
 
+  const DATE_FORMAT = 'Ymd\THis';
+  /**
+   * Hold the model name for the thru table
+   *
+   * @param string
+   */
+  private $thru_model;
+
+  /**
+   * The model with the primary key that belongs to the thru
+   *
+   * @param \Model
+   */
+  private $model;
 
 	/**
 	 * Add rules for this model.
 	 *
-	 * @author
+	 * @author Justin Palmer
 	 */
 	public function init(){
+    $this->filters()->afterSave('saveThru');
+
     $s = $this->schema();
 
-
+    $s->hasMany('alarms')->className('net\mediaslave\calendar\app\models\CalendarAlarm', true);
 	}
+
+  /**
+   * Init the thru relationship
+   *
+   * @param $model Model
+   * @return void
+   * @author Justin Palmer
+   **/
+  public function initThruRelationship(\Model $model){
+    $this->model = $model;
+    $this->thru_model = Settings::getThru($model);
+    $model_name = get_class($model);
+
+    $this->schema()->hasOne('subscriber')->className($model_name, true)->thru($this->thru_model, true);
+    $this->schema()->hasOne('thru')->className($this->thru_model, true);
+  }
+
+  /**
+   *
+   * Save to the thru table.
+   *
+   * @return boolean
+   * @author Justin Palmer
+   **/
+  public function saveThru(){
+    if($this->thru_model == null){
+      throw new InitThruNotCalledException(get_class($this));
+    }
+    //else we will save the record to the through relationship.
+    $primary = $this->model->primary_key();
+    $thru = $this->thru_model;
+    $primary_id = $this->model->$primary;
+
+    $calendar_event_foreign_key = \Inflections::foreignKey($this->table_name());
+    $model_foreign_key = \Inflections::foreignKey($this->model->table_name());
+
+    $thru = new $thru(array(
+                        $calendar_event_foreign_key => $this->id,
+                        $model_foreign_key => $this->model->id
+                        ));
+    return $thru->save();
+  }
 }

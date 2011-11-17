@@ -2,6 +2,7 @@
 
 namespace net\mediaslave\calendar\lib;
 
+use net\mediaslave\calendar\lib\exceptions\InvalidThruException;
 /**
 *
 */
@@ -9,21 +10,52 @@ class Settings extends \Hash
 {
 	const VERSION = '0.0.1';
 
+	static $thru;
+
 	private $convert = array('ttl'=> 'X-PUBLISHED-TTL',
 													 'scale'=> 'CALSCALE');
 
 	function __construct() {
 		parent::__construct();
+		$this->set('VERSION', '2.0');
 		$this->set('PRODID', '-//Mediaslave//Mediaslave Calendar ' . self::VERSION . '//EN');
 		$this->set('_PRODID', '-//%s//Mediaslave Calendar ' . self::VERSION . '//EN');
-		$this->set('VERSION', '2.0');
 		$this->set('CALSCALE', 'GREGORIAN');
 		$this->set('METHOD', 'PUBLISH');
-		$this->set('X-WR-CALNAME', sha1(time()));
+		$this->set('X-WR-CALNAME', 'Mediaslave Calendar');
 		$this->set('X-PUBLISHED-TTL', 'PT1H');
 		$this->processUserSettings();
 		$this->remove('_PRODID');
 	}
+
+	/**
+   *
+   * Register a model with a with calendar to use for the
+   * thru relationship.
+   *
+   * @return void
+   * @author Justin Palmer
+   **/
+  static public function addModel($model, $thru){
+  	if(!(self::$thru instanceof \Hash)){
+  		self::$thru = new \Hash;
+  	}
+    self::$thru->set($model, $thru);
+  }
+  /**
+   *
+   * Get the thru relationship class or throw an exception
+   *
+   * @return string
+   * @author Justin Palmer
+   **/
+  static public function getThru($key){
+  	$key = get_class($key);
+  	if(!(self::$thru instanceof \Hash) || !self::$thru->isKey($key)){
+  		throw new InvalidThruException($key);
+  	}
+  	return self::$thru->get($key);
+  }
 
 	/**
 	 *
