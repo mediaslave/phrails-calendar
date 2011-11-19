@@ -15,6 +15,7 @@ use net\mediaslave\calendar\lib\exceptions\InitThruNotCalledException;
 class CalendarEvent extends \Model{
 
   const DATE_FORMAT = 'Ymd\THis';
+  const DATE_ALL_DAY_FORMAT = 'Ymd';
   /**
    * Hold the model name for the thru table
    *
@@ -36,6 +37,7 @@ class CalendarEvent extends \Model{
 	 */
 	public function init(){
     $this->filters()->afterSave('saveThru');
+    $this->filters()->beforeDelete('deleteThru');
 
     $s = $this->schema();
 
@@ -56,6 +58,7 @@ class CalendarEvent extends \Model{
 
     $this->schema()->hasOne('subscriber')->className($model_name, true)->thru($this->thru_model, true);
     $this->schema()->hasOne('thru')->className($this->thru_model, true);
+    return $this;
   }
 
   /**
@@ -66,9 +69,7 @@ class CalendarEvent extends \Model{
    * @author Justin Palmer
    **/
   public function saveThru(){
-    if($this->thru_model == null){
-      throw new InitThruNotCalledException(get_class($this));
-    }
+    $this->hasThru();
     //else we will save the record to the through relationship.
     $primary = $this->model->primary_key();
     $thru = $this->thru_model;
@@ -82,5 +83,42 @@ class CalendarEvent extends \Model{
                         $model_foreign_key => $this->model->id
                         ));
     return $thru->save();
+  }
+
+  /**
+   *
+   * Delete the thru record and all of the alarms.
+   *
+   * @return boolean
+   * @author Justin Palmer
+   **/
+  public function deleteThru()
+  {
+    $this->hasThru();
+    if($this->thru->delete()){
+      foreach($this->alarms as $alarm){
+        //If any of the alarms fail to delete we will cancel the transaction.
+        if(!$alarm->delete()){
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   *
+   * Check that we have the thru set
+   *
+   * @throws InitThruNotCalledException
+   * @return void
+   * @author Justin Palmer
+   **/
+  private function hasThru()
+  {
+    if($this->thru_model == null){
+      throw new InitThruNotCalledException(get_class($this));
+    }
   }
 }

@@ -36,6 +36,15 @@ class Calendar
 		}
 
 		foreach($this->content as $event){
+			$format = CalendarEvent::DATE_FORMAT;
+			$start = $event->objectify('dtstart');
+			$end = $event->objectify('dtend');
+
+			if($start->format('His') == '000000' &&
+				 $end->format('His') == '000000'){
+				$format = CalendarEvent::DATE_ALL_DAY_FORMAT;
+			}
+
 			$ics .= "BEGIN:VEVENT" . $this->ret;
 			$ics .= "SUMMARY:" . $event->summary . $this->ret;
 			$ics .= "COMMENT:" . $event->comment . $this->ret;
@@ -45,8 +54,8 @@ class Calendar
 			$ics .= "STATUS:" . $event->status . $this->ret;
 			$ics .= "LOCATION:" . $event->location . $this->ret;
 			$ics .= "UID:" . $event->uid . $this->ret;
-			$ics .= "DTSTART:" . $event->objectify('dtstart')->format(CalendarEvent::DATE_FORMAT) . $this->ret;
-			$ics .= "DTEND:" . $event->objectify('dtend')->format(CalendarEvent::DATE_FORMAT) . $this->ret;
+			$ics .= "DTSTART:" . $start->format($format) . $this->ret;
+			$ics .= "DTEND:" . $end->format($format) . $this->ret;
 			$ics .= "CREATED:" . $event->objectify('created_at')->format(CalendarEvent::DATE_FORMAT) . $this->ret;
 			$ics .= $this->processAlarms($event->alarms);
 			$ics .= "END:VEVENT" . $this->ret;
