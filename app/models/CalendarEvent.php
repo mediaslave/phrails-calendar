@@ -21,7 +21,7 @@ class CalendarEvent extends \Model{
    *
    * @param string
    */
-  private $thru_model;
+  private $thru_model=null;
 
   /**
    * The model with the primary key that belongs to the thru
