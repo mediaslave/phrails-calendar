@@ -30,6 +30,27 @@ class CalendarEvent extends \Model{
    */
   private $model;
 
+  /**
+   *
+   * Find from the current month
+   *
+   * @return array
+   * @author Justin Palmer
+   **/
+  public function findAllFromCurrentMonth($operation=null, $amount=null)
+  {
+    $calculation = '';
+    if($operation !== null && $amount != null){
+      $calculation = " $operation INTERVAL $amount MONTH";
+    }
+    return $this->where('YEAR(dtstart) = YEAR(?' . $calculation . ') AND
+                         MONTH(dtstart) = MONTH(?' . $calculation . ')',
+                          date('Y-m-d'),
+                          date('Y-m-d'))
+                ->order('dtstart, summary')
+                ->findAll();
+  }
+
 	/**
 	 * Add rules for this model.
 	 *
