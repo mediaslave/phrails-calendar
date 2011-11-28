@@ -43,10 +43,44 @@ class CalendarEvent extends \Model{
     if($operation !== null && $amount != null){
       $calculation = " $operation INTERVAL $amount MONTH";
     }
-    return $this->where('YEAR(dtstart) = YEAR(?' . $calculation . ') AND
-                         MONTH(dtstart) = MONTH(?' . $calculation . ')',
+    return $this->where('(YEAR(dtstart) = YEAR(?' . $calculation . ') AND
+                         MONTH(dtstart) = MONTH(?' . $calculation . '))
+                      AND
+                          (DATE_FORMAT(dtstart, "%H%i%s") <> "000000" AND
+                           DATE_FORMAT(dtend, "%H%i%s") <> "000000")',
                           date('Y-m-d'),
                           date('Y-m-d'))
+                ->order('dtstart, summary')
+                ->findAll();
+  }
+
+  /**
+   *
+   * Find the all day events that happen during the given month
+   *
+   * @return array
+   * @author Justin Palmer
+   **/
+  public function findAllDayFromCurrentMonth($operation=null, $amount=null)
+  {
+    $today = date('Y-m-d');
+    $calculation = '';
+    if($operation !== null && $amount != null){
+      $calculation = " $operation INTERVAL $amount MONTH";
+    }
+
+    return $this->where('((YEAR(dtstart) <= YEAR(?' . $calculation . ') AND
+                           MONTH(dtstart) <= MONTH(?' . $calculation . '))
+                      AND
+                          (YEAR(dtend) >= YEAR(?' . $calculation . ') AND
+                          MONTH(dtend) >= MONTH(?' . $calculation . ')))
+                      AND
+                          (DATE_FORMAT(dtstart, "%H%i%s") = "000000" AND
+                           DATE_FORMAT(dtend, "%H%i%s") = "000000")',
+                          $today,
+                          $today,
+                          $today,
+                          $today)
                 ->order('dtstart, summary')
                 ->findAll();
   }
