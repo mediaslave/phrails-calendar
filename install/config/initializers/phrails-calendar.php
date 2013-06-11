@@ -1,4 +1,4 @@
-<?
+<?php
 use net\mediaslave\calendar\lib\Settings;
 /**
 * Example:
